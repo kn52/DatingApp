@@ -1,0 +1,103 @@
+using System;
+
+namespace API.DbServices.BaseLayer;
+
+using Microsoft.EntityFrameworkCore;
+
+public class Repository<T, E>
+    where T : DbContext
+    where E : class
+{
+    private readonly DbContext _context;
+    private readonly DbSet<E> _dbSet;
+
+    public Repository(T context)
+    {
+        _context = context;
+        _dbSet = _context.Set<E>();
+    }
+
+    public async Task<RepositoryWrapper<E>> GetByIdAsync(int id)
+    {
+        try
+        {
+            E? entity = await _dbSet.FindAsync(id);
+
+            if (entity == null)
+                return RepositoryWrapper<E>.PrepareRepositoryWrapper(false);
+
+            return RepositoryWrapper<E>.PrepareRepositoryWrapper(true, entity);
+        }
+        catch (Exception ex)
+        {
+            return RepositoryWrapper<E>.PrepareRepositoryWrapper(false, default, ex);
+        }
+    }
+
+
+    public async Task<RepositoryWrapper<IEnumerable<E>>> GetAllAsync()
+    {
+        try
+        {
+            List<E>? list = await _dbSet.ToListAsync();
+
+            bool isSuccess = list != null && list.Any();
+
+            return RepositoryWrapper<IEnumerable<E>>.PrepareRepositoryWrapper(isSuccess, list);
+        }
+        catch (Exception ex)
+        {
+            return RepositoryWrapper<IEnumerable<E>>.PrepareRepositoryWrapper(false, default, ex);
+        }
+    }
+
+
+    public async Task<RepositoryWrapper<E>> AddAsync(E entity)
+    {
+        try
+        {
+            await _dbSet.AddAsync(entity);
+            int affectedRows = await _context.SaveChangesAsync();
+
+            return RepositoryWrapper<E>.PrepareRepositoryWrapper(affectedRows > 0, entity);   
+        }
+        catch(Exception ex)
+        {
+           return RepositoryWrapper<E>.PrepareRepositoryWrapper(false, entity, ex);   
+        }
+    }
+
+    public async Task<RepositoryWrapper<E>> UpdateAsync(E entity)
+    {
+        try
+        {
+            _dbSet.Update(entity);
+            int affectedRows = await _context.SaveChangesAsync();
+
+            return RepositoryWrapper<E>.PrepareRepositoryWrapper(affectedRows > 0, entity);   
+        }
+        catch(Exception ex)
+        {
+           return RepositoryWrapper<E>.PrepareRepositoryWrapper(false, entity, ex);   
+        }
+    }
+
+    public async Task<RepositoryWrapper<E>> DeleteAsync(int id)
+    {
+        try
+        {
+            E? entity = await _dbSet.FindAsync(id);
+
+            if (entity == null)
+                return RepositoryWrapper<E>.PrepareRepositoryWrapper(false);   
+
+            _dbSet.Remove(entity);
+            int affectedRows = await _context.SaveChangesAsync();
+            return RepositoryWrapper<E>.PrepareRepositoryWrapper(affectedRows > 0);   
+        }
+        catch(Exception ex)
+        {
+            return RepositoryWrapper<E>.PrepareRepositoryWrapper(false, null, ex);   
+        }
+    }
+}
