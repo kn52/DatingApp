@@ -41,7 +41,7 @@ public static class ExtServices
         });
 
 
-        services.AddScoped(typeof(Repository<,>));
+        services.AddScoped(typeof(Repository<,,>));
         services.AddScoped<MembersRepository>();
         services.AddScoped<MembersService>();
 

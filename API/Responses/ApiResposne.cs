@@ -13,7 +13,11 @@ public class ApiResposne<T>
     {
         ApiResposne<T> response = new ApiResposne<T>();
         response.Success = source.IsSuccess ? true : false;
-        response.Message = source.IsSuccess ? CodeLibrary.Success.Message : source.Status.Message;
+        response.Message = source.IsSuccess 
+            ? CodeLibrary.Success.Message != source.Status.Message 
+            ? source.Status.Message  
+            : CodeLibrary.Success.Message 
+            : source.Status.Message;
         response.StatusCode = source.IsSuccess ? CodeLibrary.Success.Code : source.Status.Code;
         response.Data = source.Value;
 

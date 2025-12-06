@@ -4,7 +4,7 @@ namespace API.DbServices.BaseLayer;
 
 using Microsoft.EntityFrameworkCore;
 
-public class Repository<T, E>
+public class Repository<T, E, K>
     where T : DbContext
     where E : class
 {
@@ -17,7 +17,7 @@ public class Repository<T, E>
         _dbSet = _context.Set<E>();
     }
 
-    public async Task<RepositoryWrapper<E>> GetByIdAsync(int id)
+    public async Task<RepositoryWrapper<E>> GetByIdAsync(K id)
     {
         try
         {
@@ -67,11 +67,18 @@ public class Repository<T, E>
         }
     }
 
-    public async Task<RepositoryWrapper<E>> UpdateAsync(E entity)
+    public async Task<RepositoryWrapper<E>> UpdateAsync(K Id, E entity)
     {
         try
         {
-            _dbSet.Update(entity);
+            var existingEntity = await _dbSet.FindAsync(Id);
+
+            if (existingEntity == null)
+            {
+                return RepositoryWrapper<E>.PrepareRepositoryWrapper(false, entity);
+            }
+
+            _context.Entry(existingEntity).CurrentValues.SetValues(entity);
             int affectedRows = await _context.SaveChangesAsync();
 
             return RepositoryWrapper<E>.PrepareRepositoryWrapper(affectedRows > 0, entity);   
@@ -82,7 +89,7 @@ public class Repository<T, E>
         }
     }
 
-    public async Task<RepositoryWrapper<E>> DeleteAsync(int id)
+    public async Task<RepositoryWrapper<E>> DeleteAsync(K id)
     {
         try
         {

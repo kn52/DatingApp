@@ -9,6 +9,6 @@ public class AppUser
 {
     [Key]
     public string  Id { get; set;} = Guid.NewGuid().ToString();
-    public string  DisplayName  { get; set;}
+    public string  Name  { get; set;}
     public string  Email  { get; set;}
 }
