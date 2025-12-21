@@ -22,6 +22,18 @@ public static class ExtServices
 
         services.AddControllers();
 
+        // CORS
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowClientApp", policy =>
+            {
+                policy
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
+
         // Swagger for .NET 8
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(c =>
@@ -67,10 +79,10 @@ public static class ExtPipelines
             });
         }
 
+
         app.UseHttpsRedirection();
-
+        app.UseCors("AllowClientApp");
         app.UseAuthorization();
-
         app.MapControllers();
 
         app.Run();
