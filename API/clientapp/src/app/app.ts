@@ -1,34 +1,35 @@
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
-import { Member } from './app.model';
-import { ApiResponse } from '../api-response.model';
-import { ApiResponseUtil } from '../api-response.model';
 import { firstValueFrom } from 'rxjs';
+import { Member } from './app.model';
+import { ApiResponse, ApiResponseUtil } from '../api-response.model';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [HttpClientModule],
+  imports: [],
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })
+
 export class App implements OnInit {
 
   private http = inject(HttpClient);
 
   ngOnInit(): void {
-    // Safe for SSR
-    if (typeof window !== 'undefined') {
-      (window as any).getMembers = this.getMembers.bind(this);
-        const script = document.createElement('script');
-          script.src = 'assets/members.js';
-          script.onload = () => {
-            console.log('members.js loaded');
-            (window as any).loadMembers()
-          };
-          document.body.appendChild(script);
-      
-    }
+    if (typeof window === 'undefined') return;
+
+    // Expose Angular method
+    (window as any).getMembers = this.getMembers.bind(this);
+
+    // Load external JS
+    const script = document.createElement('script');
+    script.src = 'assets/members.js';
+    script.defer = true;
+
+    document.body.appendChild(script);
+
+    console.log("script loaded");
   }
 
   getMembers(): Promise<ApiResponse<Member[]>> {
@@ -36,9 +37,6 @@ export class App implements OnInit {
 
     return firstValueFrom(
       this.http.get<ApiResponse<Member[]>>(url)
-    ).catch(err => {
-      console.error('Failed to fetch members:', err);
-      return ApiResponseUtil.error<Member[]>('Failed to fetch members', []);
-    });
+    ).catch(() => ApiResponseUtil.error<Member[]>('Failed', []));
   }
 }
