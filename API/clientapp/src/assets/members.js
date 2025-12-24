@@ -27,9 +27,7 @@ console.log('document.readyState', document.readyState);
   // DOM Ready
   if (document.readyState === 'interactive') {
     loadMembers();
-} else {
-  // loadMembers();
-}
+  }
 
 
 })();
