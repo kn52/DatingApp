@@ -23,4 +23,6 @@ window.loadMembers = async function loadMembers() {
    
   };
    listEl.innerHTML = htm;
+
+   .add("hiden");
 }

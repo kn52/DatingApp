@@ -14,6 +14,7 @@ import { firstValueFrom } from 'rxjs';
 })
 export class App implements OnInit {
 
+  public title = "Members List";
   private http = inject(HttpClient);
 
   ngOnInit(): void {

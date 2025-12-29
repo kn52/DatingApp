@@ -57,7 +57,7 @@ namespace API.Controllers
             result = await _membersService.InsertMember(appUser).ConfigureAwait(false);
             return ApiResposne<AppUser>.PrepareResponse(result);
         }
-        [HttpPost("UpdateMember")]
+        [HttpPut("UpdateMember")]
         public async Task<ApiResposne<AppUser>> UpdateMember([FromBody] AppUser appUser)
         {
             var result = new Result<AppUser, StatusInfo>();
@@ -77,7 +77,7 @@ namespace API.Controllers
             result = await _membersService.UpdateMember(appUser.Id, appUser).ConfigureAwait(false);
             return ApiResposne<AppUser>.PrepareResponse(result);
         }
-        [HttpGet("DeleteMember")]
+        [HttpDelete("DeleteMember")]
         public async Task<ApiResposne<AppUser>> DeleteMember([FromQuery] string Id)
         {
             var result = new Result<AppUser, StatusInfo>();

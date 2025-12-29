@@ -75,7 +75,7 @@ public static class ExtPipelines
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "DatingApp API v1");
-                c.RoutePrefix = "swagger"; // Swagger at https://localhost:5001/swagger
+                c.RoutePrefix = ""; // Swagger at https://localhost:5001
             });
         }
 
