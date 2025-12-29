@@ -1,28 +1,40 @@
-window.loadMembers = async function loadMembers() {
-  console.log("Entry");
+console.log('members.js loaded');  // top of file
+console.log('document.readyState', document.readyState);
 
-  if (!window.getMembers) {
-    console.log("Waiting for Angular...");
-    setTimeout(loadMembers, 100);
-    return;
+(function () {
+
+  function waitForAngular() {
+    if (!window.getMembers) {
+      setTimeout(waitForAngular, 50);
+      return;
+    }
+    loadMembers();
   }
 
-  console.log("Calling API");
-  const response = await window.getMembers();
-  console.log(response);
+  async function loadMembers() {
+    console.log('DOM + Angular ready');
 
-  const listEl = document.getElementById('membersList');
-  listEl.innerHTML = '';
+    const response = await window.getMembers();
 
-  let htm = '';
-  for(let member of response.data){
-    
-    htm += `<li>`;
-    htm += `${member.name} (${member.email})`;
-    htm += `</li>`;
-   
-  };
-   listEl.innerHTML = htm;
+    const listEl = document.getElementById('membersList');
+    if (!listEl) return;
 
-   .add("hiden");
-}
+    listEl.innerHTML = response.data
+      .map(m => `<li class="list-row items-center">
+      <img src="/user.png" alt="" class="size-12 rounded-box"/>
+      <div>
+          ${m.name} (${m.email})
+      </div>
+      </li>`)
+      .join('');
+
+    document.getElementById('loading').classList.add("hidden");
+  }
+
+  // DOM Ready
+  if (document.readyState === 'interactive') {
+    loadMembers();
+  }
+
+
+})();
