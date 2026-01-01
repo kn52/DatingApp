@@ -1,6 +1,6 @@
 using API.Data;
-using API.DbServices.BaseLayer;
-using API.DbServices.Members;
+using API.DbRepository.BaseLayer;
+using API.DbRepository.Members;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -55,7 +55,6 @@ public static class ExtServices
 
         services.AddScoped(typeof(Repository<,,>));
         services.AddScoped<MembersRepository>();
-        services.AddScoped<MembersService>();
 
 
         return services;
