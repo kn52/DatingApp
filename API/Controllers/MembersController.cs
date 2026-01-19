@@ -1,4 +1,4 @@
-using API.DbServices.Members;
+using API.DbRepository.Members;
 using API.Entities;
 using API.Responses;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +9,7 @@ namespace API.Controllers
     [ApiController]
     public class MembersController : ControllerBase
     {
-        private readonly MembersRepository _membersRepository;
+        private readonly MembersRepository  _membersRepository;
 
         public MembersController(
              MembersRepository membersRepository)
@@ -55,39 +55,39 @@ namespace API.Controllers
             result = await _membersRepository.InsertMember(appUser).ConfigureAwait(false);
             return ApiResposne<AppUser>.PrepareResponse(result);
         }
-        [HttpPost("UpdateMember")]
-        public async Task<ApiResposne<AppUser>> UpdateMember([FromBody] AppUser appUser)
+        [HttpPut("UpdateMember")]
+        public async Task<ApiResposne<UserIdResponse>> UpdateMember([FromBody] AppUser appUser)
         {
-            var result = new Result<AppUser, StatusInfo>();
+            var result = new Result<UserIdResponse, StatusInfo>();
 
             if (appUser == null)
             {
                 result = CodeLibrary.BadRequest;
-                return ApiResposne<AppUser>.PrepareResponse(result);
+                return ApiResposne<UserIdResponse>.PrepareResponse(result);
             }
             if (string.IsNullOrEmpty(appUser.Id))
             {
                 result = CodeLibrary.BadRequest;
                 result.Status.Message = "Invalid Id.";
-                return ApiResposne<AppUser>.PrepareResponse(result);
+                return ApiResposne<UserIdResponse>.PrepareResponse(result);
             }
 
             result = await _membersRepository.UpdateMember(appUser.Id, appUser).ConfigureAwait(false);
-            return ApiResposne<AppUser>.PrepareResponse(result);
+            return ApiResposne<UserIdResponse>.PrepareResponse(result);
         }
-        [HttpGet("DeleteMember")]
-        public async Task<ApiResposne<AppUser>> DeleteMember([FromQuery] string Id)
+        [HttpDelete("DeleteMember")]
+        public async Task<ApiResposne<UserIdResponse>> DeleteMember([FromQuery] string Id)
         {
-            var result = new Result<AppUser, StatusInfo>();
+            var result = new Result<UserIdResponse, StatusInfo>();
 
             if (string.IsNullOrEmpty(Id))
             {
                 result = CodeLibrary.BadRequest;
-                return ApiResposne<AppUser>.PrepareResponse(result);
+                return ApiResposne<UserIdResponse>.PrepareResponse(result);
             }
 
-            result = await _membersRepository.GetMemberById(Id).ConfigureAwait(false);
-            return ApiResposne<AppUser>.PrepareResponse(result);
+            result = await _membersRepository.DeleteMember(Id).ConfigureAwait(false);
+            return ApiResposne<UserIdResponse>.PrepareResponse(result);
         }
     }
 }

@@ -12,4 +12,20 @@ public class CodeLibrary
     public static StatusInfo FailedToInsert = new(_code: 500, _message: "Failed To Insert.");
     public static StatusInfo FailedToUpdate = new(_code: 500, _message: "Failed To Update.");
     public static StatusInfo FailedToDelete = new(_code: 500, _message: "Failed To Delete.");
+
+    public static StatusInfo Get(string key)
+    {
+        return key switch
+        {
+            nameof(Success) => Success,
+            nameof(BadRequest) => BadRequest,
+            nameof(InternalServerError) => InternalServerError,
+            nameof(NotFound) => NotFound,
+            nameof(AlreadyExists) => AlreadyExists,
+            nameof(FailedToInsert) => FailedToInsert,
+            nameof(FailedToUpdate) => FailedToUpdate,
+            nameof(FailedToDelete) => FailedToDelete,
+            _ => InternalServerError
+        };
+    }
 }

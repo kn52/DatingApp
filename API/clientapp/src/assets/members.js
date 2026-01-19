@@ -20,8 +20,15 @@ console.log('document.readyState', document.readyState);
     if (!listEl) return;
 
     listEl.innerHTML = response.data
-      .map(m => `<li>${m.name} (${m.email})</li>`)
+      .map(m => `<li class="list-row items-center">
+      <img src="/user.png" alt="" class="size-12 rounded-box"/>
+      <div>
+          ${m.name} (${m.email})
+      </div>
+      </li>`)
       .join('');
+
+    document.getElementById('loading').classList.add("hidden");
   }
 
   // DOM Ready
