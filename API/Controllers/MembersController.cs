@@ -1,9 +1,7 @@
 using API.DbServices.Members;
 using API.Entities;
 using API.Responses;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 
 namespace API.Controllers
 {
@@ -11,12 +9,12 @@ namespace API.Controllers
     [ApiController]
     public class MembersController : ControllerBase
     {
-        private readonly MembersService  _membersService;
+        private readonly MembersRepository _membersRepository;
 
         public MembersController(
-             MembersService membersService)
+             MembersRepository membersRepository)
         {
-            _membersService = membersService;
+            _membersRepository = membersRepository;
         }
 
 
@@ -24,7 +22,7 @@ namespace API.Controllers
         public async Task<ApiResposne<List<AppUser>>> GetMembers()
         {
             var result = new Result<List<AppUser>, StatusInfo>();
-            result = await _membersService.GetMembers().ConfigureAwait(false);
+            result = await _membersRepository.GetMembers().ConfigureAwait(false);
             var response = ApiResposne<List<AppUser>>.PrepareResponse(result);
             return response;
         }
@@ -39,7 +37,7 @@ namespace API.Controllers
                 return ApiResposne<AppUser>.PrepareResponse(result);
             }
 
-            result = await _membersService.GetMemberById(Id).ConfigureAwait(false);
+            result = await _membersRepository.GetMemberById(Id).ConfigureAwait(false);
             return ApiResposne<AppUser>.PrepareResponse(result);
         }
         [HttpPost("InsertMember")]
@@ -54,7 +52,7 @@ namespace API.Controllers
             }
 
             appUser.Id = Guid.NewGuid().ToString();
-            result = await _membersService.InsertMember(appUser).ConfigureAwait(false);
+            result = await _membersRepository.InsertMember(appUser).ConfigureAwait(false);
             return ApiResposne<AppUser>.PrepareResponse(result);
         }
         [HttpPost("UpdateMember")]
@@ -74,7 +72,7 @@ namespace API.Controllers
                 return ApiResposne<AppUser>.PrepareResponse(result);
             }
 
-            result = await _membersService.UpdateMember(appUser.Id, appUser).ConfigureAwait(false);
+            result = await _membersRepository.UpdateMember(appUser.Id, appUser).ConfigureAwait(false);
             return ApiResposne<AppUser>.PrepareResponse(result);
         }
         [HttpGet("DeleteMember")]
@@ -88,7 +86,7 @@ namespace API.Controllers
                 return ApiResposne<AppUser>.PrepareResponse(result);
             }
 
-            result = await _membersService.GetMemberById(Id).ConfigureAwait(false);
+            result = await _membersRepository.GetMemberById(Id).ConfigureAwait(false);
             return ApiResposne<AppUser>.PrepareResponse(result);
         }
     }

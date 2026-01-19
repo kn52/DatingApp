@@ -1,7 +1,6 @@
-using System;
-
 namespace API.DbServices.BaseLayer;
 
+using API.Responses;
 using Microsoft.EntityFrameworkCore;
 
 public class Repository<T, E, K>
@@ -17,25 +16,25 @@ public class Repository<T, E, K>
         _dbSet = _context.Set<E>();
     }
 
-    public async Task<RepositoryWrapper<E>> GetByIdAsync(K id)
+    public async Task<Result<E, StatusInfo>> GetByIdAsync(K id)
     {
         try
         {
             E? entity = await _dbSet.FindAsync(id);
 
             if (entity == null)
-                return RepositoryWrapper<E>.PrepareRepositoryWrapper(false);
+                return RepositoryWrapper<E>.PrepareErrorResponse(CodeLibrary.NotFound);
 
-            return RepositoryWrapper<E>.PrepareRepositoryWrapper(true, entity);
+            return RepositoryWrapper<E>.PrepareSuccessResponse(CodeLibrary.Success, entity);
         }
         catch (Exception ex)
         {
-            return RepositoryWrapper<E>.PrepareRepositoryWrapper(false, default, ex);
+            return RepositoryWrapper<E>.PrepareErrorResponse(CodeLibrary.InternalServerError, default, ex);
         }
     }
 
 
-    public async Task<RepositoryWrapper<IEnumerable<E>>> GetAllAsync()
+    public async Task<Result<List<E>, StatusInfo>> GetAllAsync()
     {
         try
         {
@@ -43,31 +42,40 @@ public class Repository<T, E, K>
 
             bool isSuccess = list != null && list.Any();
 
-            return RepositoryWrapper<IEnumerable<E>>.PrepareRepositoryWrapper(isSuccess, list);
+            if (!isSuccess)
+            {
+                return RepositoryWrapper<List<E>>.PrepareErrorResponse(CodeLibrary.NotFound);
+            }
+
+            return RepositoryWrapper<List<E>>.PrepareSuccessResponse(CodeLibrary.Success, list);
         }
         catch (Exception ex)
         {
-            return RepositoryWrapper<IEnumerable<E>>.PrepareRepositoryWrapper(false, default, ex);
+            return RepositoryWrapper<List<E>>.PrepareErrorResponse(CodeLibrary.InternalServerError, default, ex);
         }
     }
 
 
-    public async Task<RepositoryWrapper<E>> AddAsync(E entity)
+    public async Task<Result<E, StatusInfo>> AddAsync(E entity)
     {
         try
         {
             await _dbSet.AddAsync(entity);
             int affectedRows = await _context.SaveChangesAsync();
 
-            return RepositoryWrapper<E>.PrepareRepositoryWrapper(affectedRows > 0, entity);   
+            if (!(affectedRows > 0))
+            {
+                return RepositoryWrapper<E>.PrepareErrorResponse(CodeLibrary.FailedToInsert, entity);
+            }
+            return RepositoryWrapper<E>.PrepareSuccessResponse(CodeLibrary.Success, entity);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-           return RepositoryWrapper<E>.PrepareRepositoryWrapper(false, entity, ex);   
+            return RepositoryWrapper<E>.PrepareErrorResponse(CodeLibrary.InternalServerError, entity, ex);
         }
     }
 
-    public async Task<RepositoryWrapper<E>> UpdateAsync(K Id, E entity)
+    public async Task<Result<E, StatusInfo>> UpdateAsync(K Id, E entity)
     {
         try
         {
@@ -75,36 +83,45 @@ public class Repository<T, E, K>
 
             if (existingEntity == null)
             {
-                return RepositoryWrapper<E>.PrepareRepositoryWrapper(false, entity);
+                return RepositoryWrapper<E>.PrepareErrorResponse(CodeLibrary.NotFound, entity);
             }
 
             _context.Entry(existingEntity).CurrentValues.SetValues(entity);
             int affectedRows = await _context.SaveChangesAsync();
 
-            return RepositoryWrapper<E>.PrepareRepositoryWrapper(affectedRows > 0, entity);   
+            if (!(affectedRows > 0))
+            {
+                return RepositoryWrapper<E>.PrepareErrorResponse(CodeLibrary.FailedToUpdate, entity);
+            }
+            return RepositoryWrapper<E>.PrepareSuccessResponse(CodeLibrary.Success, entity);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-           return RepositoryWrapper<E>.PrepareRepositoryWrapper(false, entity, ex);   
+            return RepositoryWrapper<E>.PrepareErrorResponse(CodeLibrary.InternalServerError, entity, ex);
         }
     }
 
-    public async Task<RepositoryWrapper<E>> DeleteAsync(K id)
+    public async Task<Result<E, StatusInfo>> DeleteAsync(K id)
     {
         try
         {
             E? entity = await _dbSet.FindAsync(id);
 
             if (entity == null)
-                return RepositoryWrapper<E>.PrepareRepositoryWrapper(false);   
+                return RepositoryWrapper<E>.PrepareErrorResponse(CodeLibrary.NotFound);
 
             _dbSet.Remove(entity);
             int affectedRows = await _context.SaveChangesAsync();
-            return RepositoryWrapper<E>.PrepareRepositoryWrapper(affectedRows > 0);   
+
+            if (!(affectedRows > 0))
+            {
+                return RepositoryWrapper<E>.PrepareErrorResponse(CodeLibrary.FailedToDelete, entity);
+            }
+            return RepositoryWrapper<E>.PrepareSuccessResponse(CodeLibrary.Success, entity);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            return RepositoryWrapper<E>.PrepareRepositoryWrapper(false, null, ex);   
+            return RepositoryWrapper<E>.PrepareErrorResponse(CodeLibrary.InternalServerError, null, ex);
         }
     }
 }

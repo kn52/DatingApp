@@ -1,20 +1,31 @@
+using API.Responses;
 using System;
 
 namespace API.DbServices.BaseLayer;
 
 public class RepositoryWrapper<T>
 {
-    public bool Success { get; set; }
-    public T Data { get; set; }
-    public Exception Exp { get; set; }
-
-
-    public static RepositoryWrapper<T> PrepareRepositoryWrapper(bool success, T? data = default, Exception? e = null)
+    private static Result<T, StatusInfo> PrepareRepositoryWrapper(bool success, bool exception, StatusInfo status, T? data = default, Exception? e = null)
     {
-        RepositoryWrapper<T> wrapperResponse = new RepositoryWrapper<T>();
-        wrapperResponse.Success = success;
-        wrapperResponse.Data = data;
-        wrapperResponse.Exp = e;
+        return new Result<T, StatusInfo>
+        {
+            IsSuccess = success,
+            IsException = exception,
+            Value = data,
+            Status = status
+        };
+    }
+
+    public static Result<T, StatusInfo> PrepareErrorResponse(StatusInfo status, T? data = default, Exception? e = null)
+    {
+        bool exception = e != null;
+        Result<T, StatusInfo> wrapperResponse = PrepareRepositoryWrapper(false, exception, status, data, e);
+
+        return wrapperResponse;
+    }
+    public static Result<T, StatusInfo> PrepareSuccessResponse(StatusInfo status, T? data = default, Exception? e = null)
+    {
+        Result<T, StatusInfo> wrapperResponse = PrepareRepositoryWrapper(true, false, status, data, e);
 
         return wrapperResponse;
     }
