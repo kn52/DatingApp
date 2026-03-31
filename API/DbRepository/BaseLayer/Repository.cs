@@ -1,6 +1,4 @@
-using API.Responses;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 namespace API.DbRepository.BaseLayer;
 
@@ -17,120 +15,86 @@ public class Repository<T, E, K>
         _dbSet = _context.Set<E>();
     }
 
-    public async Task<RepositoryWrapper<List<E>>> GetAllAsync()
+    // ✅ GET ALL
+    public async Task<List<E>> GetAllAsync()
     {
         try
         {
-            List<E>? list = await _dbSet.ToListAsync();
-
-            bool isSuccess = list != null && list.Any();
-
-            if (isSuccess)
-            {
-                return RepositoryWrapper<List<E>>.PrepareSuccessResponse(ConstantKeys.SuccessKey, list);
-            }
-
-            return RepositoryWrapper<List<E>>.PrepareErrorResponse(ConstantKeys.NotFoundKey, list);
-
+            return await _dbSet.ToListAsync() ?? [];
         }
-        catch (Exception ex)
+        catch
         {
-            return RepositoryWrapper<List<E>>.PrepareErrorResponse(ConstantKeys.InternalServerErrorKey, null, ex);
+            return [];
         }
     }
 
-    public async Task<RepositoryWrapper<E>> GetByIdAsync(K id)
+    // ✅ GET BY ID
+    public async Task<E?> GetByIdAsync(K id)
     {
         try
         {
-            E? entity = await _dbSet.FindAsync(id);
-
-            if (entity == null)
-            {
-                return RepositoryWrapper<E>.PrepareErrorResponse(ConstantKeys.NotFoundKey);
-            }
-
-            return RepositoryWrapper<E>.PrepareSuccessResponse(ConstantKeys.SuccessKey, entity);
+            return await _dbSet.FindAsync(id);
         }
-        catch (Exception ex)
+        catch
         {
-            return RepositoryWrapper<E>.PrepareErrorResponse(ConstantKeys.InternalServerErrorKey, null, ex);
+            return null;
         }
     }
 
-    public async Task<RepositoryWrapper<E>> AddAsync(E entity)
+    // ✅ ADD
+    public async Task<E?> AddAsync(E entity)
     {
-        Result<E, StatusInfo> result = new();
         try
         {
             await _dbSet.AddAsync(entity);
-            int affectedRows = await _context.SaveChangesAsync();
-
-            if (affectedRows > 0)
-            {
-                return RepositoryWrapper<E>.PrepareSuccessResponse(ConstantKeys.SuccessKey, entity);
-            }
-
-            return RepositoryWrapper<E>.PrepareErrorResponse(ConstantKeys.FailedToInsertKey, default);
+            await _context.SaveChangesAsync();
+            return entity;
         }
-        catch (Exception ex)
+        catch
         {
-            return RepositoryWrapper<E>.PrepareErrorResponse(ConstantKeys.InternalServerErrorKey, default, ex);
+            return null;
         }
     }
 
-    public async Task<RepositoryWrapper<K>> UpdateAsync(K Id, E entity)
+    // ✅ UPDATE
+    public async Task<E?> UpdateAsync(K id, E entity)
     {
         try
         {
-            var existingEntity = await _dbSet.FindAsync(Id);
+            var existingEntity = await _dbSet.FindAsync(id);
 
             if (existingEntity == null)
-            {
-                return RepositoryWrapper<K>.PrepareErrorResponse(ConstantKeys.NotFoundKey);
-            }
+                return null;
 
             _context.Entry(existingEntity).CurrentValues.SetValues(entity);
-            int affectedRows = await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-            if (affectedRows > 0)
-            {
-                return RepositoryWrapper<K>.PrepareSuccessResponse(ConstantKeys.SuccessKey, Id);
-            }
-
-            return RepositoryWrapper<K>.PrepareErrorResponse(ConstantKeys.FailedToInsertKey, Id);
+            return existingEntity;
         }
-        catch (Exception ex)
+        catch
         {
-            return RepositoryWrapper<K>.PrepareErrorResponse(ConstantKeys.InternalServerErrorKey, Id, ex);
+            return null;
         }
     }
 
-    public async Task<RepositoryWrapper<K>> DeleteAsync(K id)
+    // ✅ DELETE
+    public async Task<bool> DeleteAsync(K id)
     {
-        Result<E, StatusInfo> result = new();
         try
         {
-            E? entity = await _dbSet.FindAsync(id);
+            var entity = await _dbSet.FindAsync(id);
 
             if (entity == null)
-            {
-                return RepositoryWrapper<K>.PrepareErrorResponse(ConstantKeys.NotFoundKey, id);
-            }
+                return false;
 
             _dbSet.Remove(entity);
-            int affectedRows = await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-            if (affectedRows > 0)
-            {
-                return RepositoryWrapper<K>.PrepareSuccessResponse(ConstantKeys.SuccessKey, id);
-            }
-
-            return RepositoryWrapper<K>.PrepareErrorResponse(ConstantKeys.FailedToDeleteKey, id);
+            return true;
         }
-        catch (Exception ex)
+        catch
         {
-            return RepositoryWrapper<K>.PrepareErrorResponse(ConstantKeys.InternalServerErrorKey, id, ex);
+            return false;
         }
     }
 }

@@ -14,6 +14,7 @@ import { ApiResponse, ApiResponseUtil } from '../api-response.model';
 
 export class App implements OnInit {
 
+  protected apiBaseUrl = 'https://localhost:7297';
   public title = "Members List";
   private http = inject(HttpClient);
 
@@ -22,6 +23,10 @@ export class App implements OnInit {
 
     // Expose Angular method
     (window as any).getMembers = this.getMembers.bind(this);
+    (window as any).getMemberById = this.getMemberById.bind(this);
+    (window as any).addMember = this.addMember.bind(this);
+    (window as any).updateMember = this.updateMember.bind(this);
+    (window as any).deleteMember = this.deleteMember.bind(this);
 
     // Load external JS
     const script = document.createElement('script');
@@ -34,10 +39,42 @@ export class App implements OnInit {
   }
 
   getMembers(): Promise<ApiResponse<Member[]>> {
-    const url = 'https://localhost:7297/api/Members/GetMembers';
+    const url = `${this.apiBaseUrl}/api/Members/GetMembers`;
 
     return firstValueFrom(
       this.http.get<ApiResponse<Member[]>>(url)
     ).catch(() => ApiResponseUtil.error<Member[]>('Failed', []));
+  }
+
+  getMemberById(id: number): Promise<ApiResponse<Member>> {
+    const url = `${this.apiBaseUrl}/api/Members/GetMemberById/?Id=${id}`;
+
+    return firstValueFrom(
+      this.http.get<ApiResponse<Member>>(url)
+    ).catch(() => ApiResponseUtil.error<Member>('Failed', {} as Member));
+  }
+
+  addMember(member: Member): Promise<ApiResponse<Member>> {
+    const url = `${this.apiBaseUrl}/api/Members/AddMember`;
+
+    return firstValueFrom(
+      this.http.post<ApiResponse<Member>>(url, member)
+    ).catch(() => ApiResponseUtil.error<Member>('Failed', {} as Member));
+  }
+
+  updateMember(member: Member): Promise<ApiResponse<Member>> {
+    const url = `${this.apiBaseUrl}/api/Members/UpdateMember`;
+
+    return firstValueFrom(
+      this.http.put<ApiResponse<Member>>(url, member)
+    ).catch(() => ApiResponseUtil.error<Member>('Failed', {} as Member));
+  }
+
+  deleteMember(id: number): Promise<ApiResponse<boolean>> {
+    const url = `${this.apiBaseUrl}/api/Members/DeleteMember/?Id=${id}`;
+
+    return firstValueFrom(
+      this.http.delete<ApiResponse<boolean>>(url)
+    ).catch(() => ApiResponseUtil.error<boolean>('Failed', false));
   }
 }

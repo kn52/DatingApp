@@ -2,163 +2,176 @@ using API.Data;
 using API.DbRepository.BaseLayer;
 using API.Entities;
 using API.Responses;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.DbRepository.Members;
 
-public class MembersRepository(AppDBContext context) : Repository<AppDBContext, AppUser, string>(context)
+public class MembersRepository(AppDBContext context)
+    : Repository<AppDBContext, AppUser, string>(context)
 {
-    public async Task<Result<List<AppUser>, StatusInfo>> GetMembers()
+    public async Task<ApiResposne<List<AppUser>>> GetMembers()
     {
+        ApiResposne<List<AppUser>> response;
+
         try
         {
+            var data = await base.GetAllAsync();
 
-            var response = await base.GetAllAsync().ConfigureAwait(false);
-
-            if (response.Success)
+            response = new ApiResposne<List<AppUser>>
             {
-                var result = ResponseWrapper<List<AppUser>>.PrepareResponse(response.Success, response.StatusCode, response.Data, response.exception);
-                result.Status.Message = "Members fetched successfully.";
-                return result;
-
-            }
-
-            return ResponseWrapper<List<AppUser>>.PrepareResponse(response.Success, response.StatusCode, response.Data, response.exception);
+                Success = data.Any(),
+                Message = data.Any() ? "Members fetched successfully." : "No members found.",
+                StatusCode = 200,
+                Data = data
+            };
         }
         catch (Exception ex)
         {
-            return ResponseWrapper<List<AppUser>>.PrepareResponse(false, ConstantKeys.InternalServerErrorKey, null, ex);
+            response = new ApiResposne<List<AppUser>>
+            {
+                Success = false,
+                Message = ex.Message,
+                StatusCode = 500,
+                Data = []
+            };
         }
+
+        return response;
     }
-    public async Task<Result<AppUser, StatusInfo>> GetMemberById(string Id)
+
+    public async Task<ApiResposne<AppUser>> GetMemberById(string id)
     {
+        ApiResposne<AppUser> response;
+
         try
         {
-            var response = await base.GetByIdAsync(Id).ConfigureAwait(false);
+            var data = await base.GetByIdAsync(id);
 
-            if (response.Success)
+            response = new ApiResposne<AppUser>
             {
-                var result = ResponseWrapper<AppUser>.PrepareResponse(response.Success, response.StatusCode, response.Data, response.exception);
-                result.Status.Message =  "Member fetched successfully.";
-                return result;
-            }
-
-            return ResponseWrapper<AppUser>.PrepareResponse(response.Success, response.StatusCode, response.Data, response.exception);
+                Success = data != null,
+                Message = data != null ? "Member fetched successfully." : "Member not found.",
+                StatusCode = data != null ? 200 : 404,
+                Data = data
+            };
         }
         catch (Exception ex)
         {
-            return ResponseWrapper<AppUser>.PrepareResponse(false, ConstantKeys.InternalServerErrorKey, null, ex);
+            response = new ApiResposne<AppUser>
+            {
+                Success = false,
+                Message = ex.Message,
+                StatusCode = 500,
+                Data = null
+            };
         }
+
+        return response;
     }
-    public async Task<Result<AppUser, StatusInfo>> InsertMember(AppUser appUser)
+
+    public async Task<ApiResposne<AppUser>> InsertMember(AppUser appUser)
     {
+        ApiResposne<AppUser> response;
+
         try
         {
-            var response = new RepositoryWrapper<AppUser>();
-            var isExist = await IsMemberExists(appUser).ConfigureAwait(false);
+            var exists = await context.Set<AppUser>()
+                .AnyAsync(x => x.Name == appUser.Name && x.Email == appUser.Email);
 
-
-            if (isExist)
+            if (exists)
             {
-                var result = ResponseWrapper<AppUser>.PrepareResponse(response.Success, ConstantKeys.AlreadyExistsKey);
-                return result;
-            }
-
-            response = await base.AddAsync(appUser).ConfigureAwait(false);
-
-            if (response.Success)
-            {
-                var result = ResponseWrapper<AppUser>.PrepareResponse(response.Success, response.StatusCode, response.Data, response.exception);
-                result.Status.Message = "Member inserted successfully.";
-                return result;
-            }
-
-            return ResponseWrapper<AppUser>.PrepareResponse(response.Success, response.StatusCode, response.Data, response.exception);
-        }
-        catch (Exception ex)
-        {
-            return ResponseWrapper<AppUser>.PrepareResponse(false, ConstantKeys.InternalServerErrorKey, null, ex);
-        }
-    }
-    public async Task<Result<UserIdResponse, StatusInfo>> UpdateMember(string Id, AppUser appUser)
-    {
-        try
-        {
-            var response = await base.UpdateAsync(Id, appUser).ConfigureAwait(false);
-
-            if (response.Success)
-            {
-                var result = ResponseWrapper<UserIdResponse>.PrepareResponse(response.Success, response.StatusCode, new UserIdResponse { Id = response.Data }, response.exception);
-                result.Status.Message = "Member updated successfully.";
-                return result;
-            }
-
-            return ResponseWrapper<UserIdResponse>.PrepareResponse(response.Success, response.StatusCode, new UserIdResponse { Id = response.Data }, response.exception);
-        }
-        catch (Exception ex)
-        {
-            return ResponseWrapper<UserIdResponse>.PrepareResponse(false, ConstantKeys.InternalServerErrorKey, new UserIdResponse { Id = Id }, ex);
-        }
-    }
-    public async Task<Result<UserIdResponse, StatusInfo>> DeleteMember(string Id)
-    {
-        try
-        {
-            var response = await base.DeleteAsync(Id).ConfigureAwait(false);
-
-            if (response.Success)
-            {
-                var result = ResponseWrapper<UserIdResponse>.PrepareResponse(response.Success, response.StatusCode, new UserIdResponse { Id = response.Data }, response.exception);
-                result.Status.Message = "Members deleted successfully.";
-                return result;
-            }
-
-            return ResponseWrapper<UserIdResponse>.PrepareResponse(response.Success, response.StatusCode, new UserIdResponse { Id = response.Data }, response.exception);
-        }
-        catch (Exception ex)
-        {
-            return ResponseWrapper<UserIdResponse>.PrepareResponse(false, ConstantKeys.InternalServerErrorKey, new UserIdResponse { Id = Id }, ex);
-        }
-    }
-    public async Task<bool> IsMemberExists(AppUser appUser)
-    {
-        try
-        {
-
-            var response = await base.GetAllAsync().ConfigureAwait(false);
-
-            if (response.Success)
-            {
-                var isExists = response.Data.Where(x => x.Name == appUser.Name && x.Email == appUser.Email).Any();
-
-                if (isExists)
+                response = new ApiResposne<AppUser>
                 {
-                    return true;
-                }
+                    Success = false,
+                    Message = "Member already exists.",
+                    StatusCode = 409,
+                    Data = null
+                };
+
+                return response;
             }
 
-            return false;
+            var data = await base.AddAsync(appUser);
+
+            response = new ApiResposne<AppUser>
+            {
+                Success = data != null,
+                Message = data != null ? "Member inserted successfully." : "Insert failed.",
+                StatusCode = data != null ? 201 : 500,
+                Data = data
+            };
         }
         catch (Exception ex)
         {
-            throw;
+            response = new ApiResposne<AppUser>
+            {
+                Success = false,
+                Message = ex.Message,
+                StatusCode = 500,
+                Data = null
+            };
         }
+
+        return response;
     }
-    public async Task<bool> IsMemberExistsById(string Id)
+
+    public async Task<ApiResposne<string>> UpdateMember(string id, AppUser appUser)
     {
+        ApiResposne<string> response;
+
         try
         {
-            var response = await base.GetByIdAsync(Id).ConfigureAwait(false);
+            var updated = await base.UpdateAsync(id, appUser);
 
-            if (response.Success)
+            response = new ApiResposne<string>
             {
-                return true;
-            }
-
-            return false;
+                Success = updated != null,
+                Message = updated != null ? "Member updated successfully." : "Member not found.",
+                StatusCode = updated != null ? 200 : 404,
+                Data = id
+            };
         }
         catch (Exception ex)
         {
-            throw;
+            response = new ApiResposne<string>
+            {
+                Success = false,
+                Message = ex.Message,
+                StatusCode = 500,
+                Data = id
+            };
         }
+
+        return response;
+    }
+
+    public async Task<ApiResposne<string>> DeleteMember(string id)
+    {
+        ApiResposne<string> response;
+
+        try
+        {
+            var deleted = await base.DeleteAsync(id);
+
+            response = new ApiResposne<string>
+            {
+                Success = deleted,
+                Message = deleted ? "Member deleted successfully." : "Member not found.",
+                StatusCode = deleted ? 200 : 404,
+                Data = id
+            };
+        }
+        catch (Exception ex)
+        {
+            response = new ApiResposne<string>
+            {
+                Success = false,
+                Message = ex.Message,
+                StatusCode = 500,
+                Data = id
+            };
+        }
+
+        return response;
     }
 }
